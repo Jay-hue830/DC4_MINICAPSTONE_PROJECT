@@ -3,6 +3,23 @@
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AssistanceRequestController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\SeniorCitizenController;
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Admin and senior (controller scopes seniors to their own data)
+    Route::apiResource('assistance-requests', AssistanceRequestController::class);
+
+    // Admin only
+    Route::middleware('admin')->group(function () {
+        Route::patch('assistance-requests/{assistance_request}/status',
+            [AssistanceRequestController::class, 'updateStatus']);
+        Route::apiResource('senior-citizens', SeniorCitizenController::class);
+        Route::get('dashboard', DashboardController::class);
+    });
+});
 
 Route::get('/health', function () {
     return response()->json([
