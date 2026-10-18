@@ -12,14 +12,26 @@ class AssistanceRequest extends Model
 
     public const STATUSES = ['pending', 'approved', 'rejected', 'in_progress', 'completed', 'cancelled'];
 
-public const TRANSITIONS = [
-    'pending'     => ['approved', 'rejected', 'cancelled'],
-    'approved'    => ['in_progress', 'completed', 'cancelled'],
-    'in_progress' => ['completed', 'cancelled'],
-    'rejected'    => [],
-    'completed'   => [],
-    'cancelled'   => [],
-];
+    public const TRANSITIONS = [
+        'pending' => ['approved', 'rejected', 'cancelled'],
+        'approved' => ['in_progress', 'completed', 'cancelled'],
+        'in_progress' => ['completed', 'cancelled'],
+        'rejected' => [],
+        'completed' => [],
+        'cancelled' => [],
+    ];
+
+    protected $fillable = [
+        'senior_citizen_id',
+        'assistance_type_id',
+        'title',
+        'description',
+        'date_needed',
+        'status',
+        'reviewed_by',
+        'reviewed_at',
+        'admin_remarks',
+    ];
 
     protected function casts(): array
     {

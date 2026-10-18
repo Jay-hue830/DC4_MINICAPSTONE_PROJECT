@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AssistanceRequestController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\SeniorCitizenController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -40,6 +40,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Temporary route to test role middleware; remove on Day 6
     Route::get('/admin/ping', fn (Request $request) => response()->json([
-        'message' => 'Welcome, admin ' . $request->user()->name . '.',
+        'message' => 'Welcome, admin '.$request->user()->name.'.',
     ]))->middleware('role:admin');
 });

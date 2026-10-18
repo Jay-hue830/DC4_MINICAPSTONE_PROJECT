@@ -20,10 +20,10 @@ class UserFactory extends Factory
 
         return [
             'name' => "$first $last",
-            'email' => Str::slug("$first.$last", '.') . fake()->unique()->numberBetween(10, 9999) . '@seniorcare.test',
+            'email' => Str::slug("$first.$last", '.').fake()->unique()->numberBetween(10, 9999).'@seniorcare.test',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('Senior#2026'),
-            'role' => 'senior',
+            'role' => User::ROLE_SENIOR_CITIZEN,
             'remember_token' => Str::random(10),
         ];
     }
@@ -35,6 +35,6 @@ class UserFactory extends Factory
 
     public function senior(): static
     {
-        return $this->state(fn () => ['role' => 'senior']);
+        return $this->state(fn () => ['role' => User::ROLE_SENIOR_CITIZEN]);
     }
 }
