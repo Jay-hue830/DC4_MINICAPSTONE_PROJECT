@@ -7,39 +7,34 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-/**
- * @extends Factory<User>
- */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
+    protected $model = User::class;
+
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
+        $first = fake()->randomElement(['Maria', 'Jose', 'Rosario', 'Antonio', 'Lourdes', 'Ramon', 'Teresita', 'Eduardo']);
+        $last = fake()->randomElement(['Reyes', 'Santos', 'Garcia', 'Bautista', 'Mendoza', 'Villanueva', 'Aquino', 'Castillo']);
+
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'name' => "$first $last",
+            'email' => Str::slug("$first.$last", '.') . fake()->unique()->numberBetween(10, 9999) . '@seniorcare.test',
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
+            'password' => static::$password ??= Hash::make('Senior#2026'),
+            'role' => 'senior',
             'remember_token' => Str::random(10),
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
+    public function admin(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
+        return $this->state(fn () => ['role' => 'admin']);
+    }
+
+    public function senior(): static
+    {
+        return $this->state(fn () => ['role' => 'senior']);
     }
 }
