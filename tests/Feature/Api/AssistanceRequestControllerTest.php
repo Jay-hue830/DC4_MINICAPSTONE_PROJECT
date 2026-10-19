@@ -57,6 +57,87 @@ class AssistanceRequestControllerTest extends TestCase
             ->assertJsonPath('meta.per_page', 1);
     }
 
+    public function test_admin_can_search_and_filter_assistance_requests(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $seniorCitizen = SeniorCitizen::factory()->create([
+            'first_name' => 'Maria',
+            'last_name' => 'Santos',
+        ]);
+        $assistanceType = AssistanceType::factory()->create();
+        $otherAssistanceType = AssistanceType::factory()->create();
+
+        AssistanceRequest::factory()
+            ->for($seniorCitizen, 'seniorCitizen')
+            ->for($assistanceType, 'assistanceType')
+            ->create([
+                'title' => 'Medical transportation',
+                'description' => 'A ride to the clinic',
+                'date_needed' => '2026-10-20',
+                'status' => 'pending',
+            ]);
+
+        AssistanceRequest::factory()
+            ->for($seniorCitizen, 'seniorCitizen')
+            ->for($otherAssistanceType, 'assistanceType')
+            ->create([
+                'title' => 'Food support',
+                'description' => 'Grocery assistance',
+                'date_needed' => '2026-10-20',
+                'status' => 'pending',
+            ]);
+
+        AssistanceRequest::factory()->create([
+            'title' => 'Roof repair',
+            'description' => 'Help repairing a roof',
+            'date_needed' => '2026-10-21',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson('/api/assistance-requests?search=Maria%20Santos&assistance_type_id='.$assistanceType->id.'&status=pending&date_from=2026-10-20&date_to=2026-10-20')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.title', 'Medical transportation')
+            ->assertJsonPath('data.0.senior_citizen.first_name', 'Maria')
+            ->assertJsonPath('data.0.assistance_type.id', $assistanceType->id);
+
+        $this->getJson('/api/assistance-requests?search=transportation')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.title', 'Medical transportation');
+
+        $this->getJson('/api/assistance-requests?search=clinic')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.description', 'A ride to the clinic');
+    }
+
+    public function test_invalid_request_fields_return_validation_errors(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->postJson('/api/assistance-requests', [])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'senior_citizen_id',
+                'assistance_type_id',
+                'title',
+                'description',
+                'date_needed',
+            ]);
+    }
+
+    public function test_unknown_request_ids_return_not_found(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->getJson('/api/assistance-requests/999999')
+            ->assertNotFound();
+    }
+
     public function test_senior_citizen_cannot_view_another_users_request(): void
     {
         $user = User::factory()->senior()->create();
@@ -151,26 +232,41 @@ class AssistanceRequestControllerTest extends TestCase
         ])->assertForbidden();
     }
 
-    public function test_only_admin_can_delete_assistance_requests(): void
+    public function test_seniors_can_delete_only_their_own_pending_requests(): void
     {
         $senior = User::factory()->senior()->create();
         $seniorCitizen = SeniorCitizen::factory()->for($senior)->create();
         $pendingRequest = AssistanceRequest::factory()
             ->for($seniorCitizen, 'seniorCitizen')
             ->create();
+        $approvedRequest = AssistanceRequest::factory()
+            ->for($seniorCitizen, 'seniorCitizen')
+            ->approved()
+            ->create();
+        $otherSeniorRequest = AssistanceRequest::factory()->create();
 
         $this->actingAs($senior)
             ->deleteJson("/api/assistance-requests/{$pendingRequest->id}")
-            ->assertForbidden();
+            ->assertNoContent();
+
+        $this->deleteJson("/api/assistance-requests/{$approvedRequest->id}")
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Only pending requests can be deleted.');
+
+        $this->deleteJson("/api/assistance-requests/{$otherSeniorRequest->id}")
+            ->assertForbidden()
+            ->assertJsonPath('message', 'You cannot delete this request.');
 
         $admin = User::factory()->admin()->create();
         $this->actingAs($admin)
-            ->deleteJson("/api/assistance-requests/{$pendingRequest->id}")
+            ->deleteJson("/api/assistance-requests/{$otherSeniorRequest->id}")
             ->assertNoContent();
 
         $this->assertDatabaseMissing('assistance_requests', [
             'id' => $pendingRequest->id,
         ]);
+        $this->assertDatabaseHas('assistance_requests', ['id' => $approvedRequest->id]);
+        $this->assertDatabaseMissing('assistance_requests', ['id' => $otherSeniorRequest->id]);
     }
 
     public function test_only_admin_can_update_request_status(): void
@@ -183,6 +279,19 @@ class AssistanceRequestControllerTest extends TestCase
                 'status' => 'approved',
             ])
             ->assertForbidden();
+    }
+
+    public function test_status_endpoint_rejects_invalid_status_values(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $assistanceRequest = AssistanceRequest::factory()->create();
+
+        $this->actingAs($admin)
+            ->patchJson("/api/assistance-requests/{$assistanceRequest->id}/status", [
+                'status' => 'unknown',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['status']);
     }
 
     public function test_admin_can_transition_a_pending_request_and_record_review_details(): void

@@ -59,6 +59,9 @@ class DashboardController extends Controller
         $data = [
             'total_requests' => (clone $requests)->count(),
             'pending_requests' => $requestsByStatus['pending'],
+            'approved_requests' => $requestsByStatus['approved'],
+            'completed_requests' => $requestsByStatus['completed'],
+            'rejected_requests' => $requestsByStatus['rejected'],
             'requests_this_month' => (clone $requests)
                 ->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)

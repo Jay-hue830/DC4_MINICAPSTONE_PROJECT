@@ -14,6 +14,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('assistance-types', AssistanceTypeController::class);
     Route::apiResource('assistance-requests', AssistanceRequestController::class);
     Route::get('dashboard', DashboardController::class);
+    Route::get('/health', function () {
+        return response()->json([
+            'status' => 'ok',
+            'app' => config('app.name'),
+            'time' => now()->toIso8601String(),
+        ]);
+    });
 
     // Admin only
     Route::middleware('admin')->group(function () {
@@ -21,14 +28,6 @@ Route::middleware('auth:sanctum')->group(function () {
             [AssistanceRequestController::class, 'updateStatus']);
         Route::apiResource('senior-citizens', SeniorCitizenController::class);
     });
-});
-
-Route::get('/health', function () {
-    return response()->json([
-        'status' => 'ok',
-        'app' => config('app.name'),
-        'time' => now()->toIso8601String(),
-    ]);
 });
 
 // Public routes

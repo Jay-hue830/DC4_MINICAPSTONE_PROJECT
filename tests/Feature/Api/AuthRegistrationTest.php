@@ -77,4 +77,25 @@ class AuthRegistrationTest extends TestCase
             'email' => 'maria.santos@example.test',
         ]);
     }
+
+    public function test_registration_rejects_duplicate_email_addresses(): void
+    {
+        User::factory()->create(['email' => 'existing@example.test']);
+
+        $this->postJson('/api/register', [
+            'first_name' => 'Maria',
+            'last_name' => 'Santos',
+            'email' => 'existing@example.test',
+            'password' => 'SecurePass2026',
+            'password_confirmation' => 'SecurePass2026',
+            'birth_date' => '1950-01-01',
+            'sex' => 'female',
+            'contact_number' => '09171234567',
+            'address' => 'Purok 1, Rizal Street',
+            'barangay' => 'San Roque',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['email'])
+            ->assertJsonPath('errors.email.0', 'This email address is already registered.');
+    }
 }

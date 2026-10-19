@@ -26,9 +26,14 @@ class SeniorCitizenController extends Controller
             ->with('user:id,name,email')
             ->withCount('assistanceRequests')
             ->when($request->query('search'), function ($query, $search): void {
+                $search = trim($search);
+
+                if ($search === '') {
+                    return;
+                }
+
                 $query->where(function ($query) use ($search): void {
-                    $query->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
+                    $query->searchByName($search)
                         ->orWhere('barangay', 'like', "%{$search}%")
                         ->orWhere('contact_number', 'like', "%{$search}%");
                 });

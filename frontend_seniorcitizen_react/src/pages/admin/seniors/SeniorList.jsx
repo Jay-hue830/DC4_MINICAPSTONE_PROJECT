@@ -138,7 +138,7 @@ export default function SeniorList() {
 
       {loading ? (
         <Loading text="Loading senior citizens..." />
-      ) : items.length === 0 ? (
+      ) : error ? null : items.length === 0 ? (
         <div className="card empty">
           {debouncedSearch
             ? `No senior citizens match "${debouncedSearch}".`

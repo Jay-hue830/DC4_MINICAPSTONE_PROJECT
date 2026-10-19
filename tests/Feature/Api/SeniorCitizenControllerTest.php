@@ -57,6 +57,7 @@ class SeniorCitizenControllerTest extends TestCase
         $admin = User::factory()->admin()->create();
         SeniorCitizen::factory()->count(3)->create([
             'first_name' => 'Maria',
+            'last_name' => 'Santos',
             'sex' => 'female',
         ]);
         SeniorCitizen::factory()->create([
@@ -65,7 +66,7 @@ class SeniorCitizenControllerTest extends TestCase
         ]);
 
         $firstPage = $this->actingAs($admin)
-            ->getJson('/api/senior-citizens?search=Maria&per_page=2&page=1')
+            ->getJson('/api/senior-citizens?search=Maria%20Santos&per_page=2&page=1')
             ->assertOk()
             ->assertJsonPath('meta.current_page', 1)
             ->assertJsonPath('meta.last_page', 2)
@@ -142,6 +143,14 @@ class SeniorCitizenControllerTest extends TestCase
         $this->actingAs($senior)
             ->getJson('/api/senior-citizens')
             ->assertForbidden();
+
+        $this->postJson('/api/senior-citizens')
+            ->assertForbidden();
+
+        $assistanceRequest = AssistanceRequest::factory()->create();
+        $this->patchJson("/api/assistance-requests/{$assistanceRequest->id}/status", [
+            'status' => 'approved',
+        ])->assertForbidden();
 
         Auth::forgetGuards();
 

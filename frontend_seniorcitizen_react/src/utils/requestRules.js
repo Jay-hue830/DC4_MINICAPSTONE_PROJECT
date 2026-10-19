@@ -26,8 +26,14 @@ export function canEditRequest(user, request) {
     : request.status === 'pending'
 }
 
-export function canDeleteRequest(user) {
-  return user?.role === 'admin'
+export function canDeleteRequest(user, request) {
+  if (user?.role === 'admin') {
+    return true
+  }
+
+  return user?.role === 'senior_citizen' &&
+    request?.status === 'pending' &&
+    request.senior_citizen?.user_id === user.id
 }
 
 export function canChangeRequestStatus(user, request) {

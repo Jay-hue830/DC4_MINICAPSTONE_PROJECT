@@ -26,18 +26,31 @@ class DashboardControllerTest extends TestCase
             ->for($seniorCitizen, 'seniorCitizen')
             ->for($assistanceType, 'assistanceType')
             ->create(['status' => 'approved']);
+        AssistanceRequest::factory()
+            ->for($seniorCitizen, 'seniorCitizen')
+            ->for($assistanceType, 'assistanceType')
+            ->create(['status' => 'completed']);
+        AssistanceRequest::factory()
+            ->for($seniorCitizen, 'seniorCitizen')
+            ->for($assistanceType, 'assistanceType')
+            ->create(['status' => 'rejected']);
 
         $this->actingAs($admin)
             ->getJson('/api/dashboard')
             ->assertOk()
             ->assertJsonPath('data.total_senior_citizens', 1)
-            ->assertJsonPath('data.total_requests', 2)
+            ->assertJsonPath('data.total_requests', 4)
             ->assertJsonPath('data.pending_requests', 1)
-            ->assertJsonPath('data.requests_this_month', 2)
+            ->assertJsonPath('data.approved_requests', 1)
+            ->assertJsonPath('data.completed_requests', 1)
+            ->assertJsonPath('data.rejected_requests', 1)
+            ->assertJsonPath('data.requests_this_month', 4)
             ->assertJsonPath('data.requests_by_status.pending', 1)
             ->assertJsonPath('data.requests_by_status.approved', 1)
+            ->assertJsonPath('data.requests_by_status.completed', 1)
+            ->assertJsonPath('data.requests_by_status.rejected', 1)
             ->assertJsonPath('data.requests_by_type.0.id', $assistanceType->id)
-            ->assertJsonPath('data.requests_by_type.0.total', 2);
+            ->assertJsonPath('data.requests_by_type.0.total', 4);
     }
 
     public function test_senior_dashboard_returns_only_the_users_request_statistics(): void

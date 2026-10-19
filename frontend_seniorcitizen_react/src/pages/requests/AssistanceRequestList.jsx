@@ -310,7 +310,7 @@ export default function AssistanceRequestList() {
 
       {loading ? (
         <Loading text="Loading requests..." />
-      ) : items.length === 0 ? (
+      ) : error ? null : items.length === 0 ? (
         <p className="empty">
           {search || typeId || status || dateFrom || dateTo
             ? 'No assistance requests match your search or filters.'
@@ -360,7 +360,7 @@ export default function AssistanceRequestList() {
                         Edit
                       </Link>
                     )}
-                    {canDeleteRequest(user) && (
+                    {canDeleteRequest(user, request) && (
                       <Button
                         variant="danger"
                         onClick={() => setDeleteTarget(request)}

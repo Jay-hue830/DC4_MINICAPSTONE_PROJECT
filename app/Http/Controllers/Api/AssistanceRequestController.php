@@ -44,12 +44,19 @@ class AssistanceRequestController extends Controller
             ->when($request->query('date_from'), fn ($query, $value) => $query->whereDate('date_needed', '>=', $value))
             ->when($request->query('date_to'), fn ($query, $value) => $query->whereDate('date_needed', '<=', $value))
             ->when($request->query('search'), function ($query, $search): void {
+                $search = trim($search);
+
+                if ($search === '') {
+                    return;
+                }
+
                 $query->where(function ($query) use ($search): void {
                     $query->where('title', 'like', "%{$search}%")
                         ->orWhere('description', 'like', "%{$search}%")
-                        ->orWhereHas('seniorCitizen', fn ($seniorCitizenQuery) => $seniorCitizenQuery
-                            ->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%"));
+                        ->orWhereHas(
+                            'seniorCitizen',
+                            fn ($seniorCitizenQuery) => $seniorCitizenQuery->searchByName($search)
+                        );
                 });
             })
             ->orderBy($sortBy, $sortDir)
@@ -96,11 +103,19 @@ class AssistanceRequestController extends Controller
 
     public function destroy(Request $request, AssistanceRequest $assistanceRequest): Response
     {
+        $user = $request->user();
+
         abort_unless(
-            $request->user()->isAdmin(),
+            $user->isAdmin() || $assistanceRequest->seniorCitizen?->user_id === $user->id,
             Response::HTTP_FORBIDDEN,
-            'Only administrators can delete assistance requests.'
+            'You cannot delete this request.'
         );
+        abort_if(
+            ! $user->isAdmin() && $assistanceRequest->status !== 'pending',
+            Response::HTTP_FORBIDDEN,
+            'Only pending requests can be deleted.'
+        );
+
         $assistanceRequest->delete();
 
         return response()->noContent();
