@@ -11,6 +11,9 @@ export const createRequest = (payload) =>
 export const updateRequest = (id, payload) =>
   api.put(`/assistance-requests/${id}`, payload)
 
+export const updateRequestStatus = (id, payload) =>
+  api.patch(`/assistance-requests/${id}/status`, payload)
+
 export const deleteRequest = (id) =>
   api.delete(`/assistance-requests/${id}`)
 

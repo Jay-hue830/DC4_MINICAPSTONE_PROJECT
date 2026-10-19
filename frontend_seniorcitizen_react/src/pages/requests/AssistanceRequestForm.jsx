@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import useAuth from '../../hooks/useAuth'
 import Alert from '../../components/Alert'
 import Button from '../../components/Button'
 import FormInput from '../../components/FormInput'
@@ -10,6 +11,8 @@ import {
   getRequest,
   updateRequest,
 } from '../../services/requestService'
+import { canEditRequest } from '../../utils/requestRules'
+import { validateRequest } from '../../utils/validateRequest'
 
 const INITIAL_FORM = {
   title: '',
@@ -18,17 +21,23 @@ const INITIAL_FORM = {
   date_needed: '',
 }
 
-export default function RequestForm() {
+export default function AssistanceRequestForm() {
   const { id } = useParams()
   const isEdit = Boolean(id)
+  const { user } = useAuth()
+  const isAdmin = user.role === 'admin'
   const navigate = useNavigate()
-  const [form, setForm] = useState(INITIAL_FORM)
+  const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  const [form, setForm] = useState(() => ({
+    ...INITIAL_FORM,
+    date_needed: isEdit ? '' : today,
+  }))
   const [types, setTypes] = useState([])
+  const [original, setOriginal] = useState(null)
   const [errors, setErrors] = useState({})
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [minimumDate] = useState(() => new Date().toISOString().slice(0, 10))
 
   useEffect(() => {
     let isActive = true
@@ -51,6 +60,7 @@ export default function RequestForm() {
 
         if (requestResponse) {
           const request = requestResponse.data.data ?? requestResponse.data
+          setOriginal(request)
           setForm({
             title: request.title ?? '',
             description: request.description ?? '',
@@ -89,21 +99,47 @@ export default function RequestForm() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    setErrors({})
     setMessage('')
+
+    const clientErrors = validateRequest(form, { isEdit, original })
+    if (Object.keys(clientErrors).length > 0) {
+      setErrors(clientErrors)
+      return
+    }
+
+    setErrors({})
     setSubmitting(true)
 
     try {
       if (isEdit) {
-        await updateRequest(id, form)
+        const payload = { ...form }
+        if (form.date_needed === original?.date_needed) {
+          delete payload.date_needed
+        }
+        await updateRequest(id, payload)
       } else {
         await createRequest(form)
       }
 
-      navigate('/requests', { replace: true })
+      navigate('/requests', {
+        replace: true,
+        state: {
+          message: isEdit
+            ? 'Request updated successfully.'
+            : 'Request submitted successfully.',
+        },
+      })
     } catch (requestError) {
       if (requestError.response?.status === 422) {
-        setErrors(requestError.response.data.errors ?? {})
+        setErrors(
+          Object.fromEntries(
+            Object.entries(requestError.response.data.errors ?? {}).map(
+              ([name, messages]) => [name, messages[0]],
+            ),
+          ),
+        )
+      } else if (requestError.response?.status === 403) {
+        setMessage('You are not allowed to change this request.')
       } else {
         setMessage(requestError.response?.data?.message ?? 'Save failed.')
       }
@@ -116,17 +152,47 @@ export default function RequestForm() {
     return <Loading text="Loading request form..." />
   }
 
+  if (!isEdit && isAdmin) {
+    return <Navigate to="/requests" replace />
+  }
+
+  if (isEdit && original && !canEditRequest(user, original)) {
+    return (
+      <section className="page">
+        <Alert type="error">This request can no longer be edited.</Alert>
+        <Button variant="secondary" onClick={() => navigate('/requests')}>
+          Back to list
+        </Button>
+      </section>
+    )
+  }
+
+  const fieldError = (name) =>
+    Array.isArray(errors[name]) ? errors[name][0] : errors[name]
+
+  const minDate =
+    isEdit && form.date_needed === original?.date_needed
+      ? undefined
+      : today
+
   return (
-    <section className="card request-form">
-      <h1>{isEdit ? 'Edit Request' : 'New Request'}</h1>
+    <section className="page request-form-page">
+      <h1>{isEdit ? 'Edit Assistance Request' : 'New Assistance Request'}</h1>
       <Alert type="error" onClose={() => setMessage('')}>
         {message}
       </Alert>
-      <form onSubmit={handleSubmit}>
+      <form className="card request-form" onSubmit={handleSubmit} noValidate>
+        {isEdit && isAdmin && original?.senior_citizen && (
+          <p>
+            <strong>Senior citizen:</strong>{' '}
+            {original.senior_citizen.first_name} {original.senior_citizen.last_name}
+          </p>
+        )}
+
         <FormInput
           label="Title"
           name="title"
-          error={errors.title?.[0]}
+          error={fieldError('title')}
           value={form.title}
           onChange={handleChange}
           maxLength={150}
@@ -137,7 +203,7 @@ export default function RequestForm() {
           as="select"
           label="Assistance Type"
           name="assistance_type_id"
-          error={errors.assistance_type_id?.[0]}
+          error={fieldError('assistance_type_id')}
           value={form.assistance_type_id}
           onChange={handleChange}
           required
@@ -154,10 +220,10 @@ export default function RequestForm() {
           label="Date Needed"
           name="date_needed"
           type="date"
-          error={errors.date_needed?.[0]}
+          error={fieldError('date_needed')}
           value={form.date_needed}
           onChange={handleChange}
-          min={minimumDate}
+          min={minDate}
           required
         />
 
@@ -165,7 +231,7 @@ export default function RequestForm() {
           as="textarea"
           label="Description"
           name="description"
-          error={errors.description?.[0]}
+          error={fieldError('description')}
           rows={4}
           value={form.description}
           onChange={handleChange}
