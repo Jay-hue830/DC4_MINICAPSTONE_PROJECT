@@ -6,8 +6,8 @@ import Register from './pages/Register'
 import AdminDashboard from './pages/AdminDashboard'
 import SeniorCitizenDashboard from './pages/SeniorCitizenDashboard'
 import SeniorCitizens from './pages/SeniorCitizens'
-import AssistanceRequests from './pages/AssistanceRequests'
-import AssistanceRequestForm from './pages/AssistanceRequestForm'
+import RequestList from './pages/requests/RequestList'
+import RequestForm from './pages/requests/RequestForm'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 
@@ -19,9 +19,16 @@ export default function App() {
 
       <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route path="/profile" element={<Profile />} />
-        <Route path="/requests" element={<AssistanceRequests />} />
-        <Route path="/requests/new" element={<AssistanceRequestForm />} />
-        <Route path="/requests/:id/edit" element={<AssistanceRequestForm />} />
+        <Route path="/requests" element={<RequestList />} />
+        <Route
+          path="/requests/new"
+          element={
+            <ProtectedRoute roles={['senior_citizen']}>
+              <RequestForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/requests/:id/edit" element={<RequestForm />} />
         <Route
           path="/my-dashboard"
           element={

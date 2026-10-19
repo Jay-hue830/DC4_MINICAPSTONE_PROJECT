@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AssistanceRequestController;
+use App\Http\Controllers\Api\AssistanceTypeController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\SeniorCitizenController;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->group(function () {
 
     // Admin and senior (controller scopes seniors to their own data)
+    Route::get('assistance-types', AssistanceTypeController::class);
     Route::apiResource('assistance-requests', AssistanceRequestController::class);
 
     // Admin only

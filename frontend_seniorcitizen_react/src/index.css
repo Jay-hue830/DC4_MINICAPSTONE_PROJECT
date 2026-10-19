@@ -81,3 +81,121 @@ button:disabled {
 .error {
   color: #c53030;
 }
+
+.requests-page {
+  padding: 1rem 0;
+}
+
+.page-header,
+.request-filter,
+.form-actions,
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.page-header {
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.page-header h1,
+.request-form h1 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+}
+
+.button-link {
+  display: inline-block;
+  padding: 0.6rem 0.8rem;
+  border-radius: 4px;
+  background: #2b6cb0;
+  color: #fff;
+  text-decoration: none;
+}
+
+.request-filter {
+  margin: 1rem 0;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.data-table th {
+  background: #edf2f7;
+}
+
+.table-actions {
+  white-space: nowrap;
+}
+
+.table-actions a {
+  margin-right: 0.75rem;
+}
+
+.pagination {
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.request-form {
+  max-width: 560px;
+  margin: 2rem auto;
+}
+
+.request-form h1 {
+  margin-bottom: 1.5rem;
+}
+
+.request-form form {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+}
+
+.field-error {
+  color: #c53030;
+}
+
+.secondary-button {
+  background: #64748b;
+}
+
+@media (max-width: 600px) {
+  .page-header {
+    align-items: flex-start;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.55rem;
+  }
+}
