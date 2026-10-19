@@ -1,17 +1,24 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
 
 export default function ProtectedRoute({ children, roles }) {
   const { user } = useAuth()
+  const location = useLocation()
 
   if (!user) {
-    return <Navigate to="/login" replace />
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location }}
+      />
+    )
   }
 
   if (roles && !roles.includes(user.role)) {
     return (
       <Navigate
-        to={user.role === 'admin' ? '/admin' : '/my-dashboard'}
+        to={user.role === 'admin' ? '/admin' : '/dashboard'}
         replace
       />
     )

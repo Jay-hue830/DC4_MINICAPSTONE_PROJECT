@@ -17,7 +17,10 @@ export default function Login() {
 
     try {
       const user = await login(form)
-      navigate(user.role === 'admin' ? '/admin' : '/my-dashboard')
+      const home = user.role === 'admin' ? '/admin' : '/dashboard'
+      const from = location.state?.from?.pathname
+      const allowed = from && (user.role === 'admin' || !from.startsWith('/admin'))
+      navigate(allowed ? from : home, { replace: true })
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Login failed')
     } finally {

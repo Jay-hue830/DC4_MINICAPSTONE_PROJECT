@@ -40,12 +40,16 @@ export default function App() {
           element={<AssistanceRequestDetails />}
         />
         <Route
-          path="/my-dashboard"
+          path="/dashboard"
           element={
             <ProtectedRoute roles={['senior_citizen']}>
               <SeniorCitizenDashboard />
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/my-dashboard"
+          element={<Navigate to="/dashboard" replace />}
         />
         <Route
           path="/admin"

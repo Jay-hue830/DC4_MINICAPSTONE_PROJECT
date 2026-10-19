@@ -8,13 +8,24 @@ use App\Models\AssistanceRequest;
 use App\Models\AssistanceType;
 use App\Models\SeniorCitizen;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
-        $counts = AssistanceRequest::query()
+        $user = $request->user();
+        $requests = AssistanceRequest::query();
+
+        if (! $user->isAdmin()) {
+            $requests->whereHas(
+                'seniorCitizen',
+                fn ($query) => $query->where('user_id', $user->id)
+            );
+        }
+
+        $counts = (clone $requests)
             ->select('status', DB::raw('COUNT(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -25,7 +36,13 @@ class DashboardController extends Controller
             ]);
 
         $requestsByType = AssistanceType::query()
-            ->withCount('assistanceRequests')
+            ->withCount([
+                'assistanceRequests' => fn ($query) => $query
+                    ->when(! $user->isAdmin(), fn ($query) => $query->whereHas(
+                        'seniorCitizen',
+                        fn ($seniorCitizenQuery) => $seniorCitizenQuery->where('user_id', $user->id)
+                    )),
+            ])
             ->get()
             ->map(fn (AssistanceType $assistanceType): array => [
                 'id' => $assistanceType->id,
@@ -33,25 +50,28 @@ class DashboardController extends Controller
                 'total' => $assistanceType->assistance_requests_count,
             ]);
 
-        $recentRequests = AssistanceRequest::query()
+        $recentRequests = (clone $requests)
             ->with(['seniorCitizen', 'assistanceType'])
             ->latest()
             ->take(5)
             ->get();
 
-        return response()->json([
-            'data' => [
-                'total_senior_citizens' => SeniorCitizen::query()->count(),
-                'total_requests' => AssistanceRequest::query()->count(),
-                'pending_requests' => $requestsByStatus['pending'],
-                'requests_this_month' => AssistanceRequest::query()
-                    ->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year)
-                    ->count(),
-                'requests_by_status' => $requestsByStatus,
-                'requests_by_type' => $requestsByType,
-                'recent_requests' => AssistanceRequestResource::collection($recentRequests),
-            ],
-        ]);
+        $data = [
+            'total_requests' => (clone $requests)->count(),
+            'pending_requests' => $requestsByStatus['pending'],
+            'requests_this_month' => (clone $requests)
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->count(),
+            'requests_by_status' => $requestsByStatus,
+            'requests_by_type' => $requestsByType,
+            'recent_requests' => AssistanceRequestResource::collection($recentRequests),
+        ];
+
+        if ($user->isAdmin()) {
+            $data['total_senior_citizens'] = SeniorCitizen::query()->count();
+        }
+
+        return response()->json(['data' => $data]);
     }
 }

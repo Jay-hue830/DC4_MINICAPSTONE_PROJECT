@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import Button from '../components/Button'
 import useAuth from '../hooks/useAuth'
 
 export default function MainLayout() {
@@ -21,16 +22,30 @@ export default function MainLayout() {
 
   return (
     <div className="app">
-      <nav className="navbar">
-        <strong>Senior Assistance Tracker</strong>
-        <div className="nav-links">
-          <NavLink to={isAdmin ? '/admin' : '/my-dashboard'}>Dashboard</NavLink>
-          {isAdmin && <NavLink to="/admin/senior-citizens">Senior Citizens</NavLink>}
-          <NavLink to="/requests">Requests</NavLink>
-          <NavLink to="/profile">Profile</NavLink>
-          <button onClick={handleLogout}>Logout</button>
+      <header className="navbar">
+        <div className="navbar-inner">
+          <strong className="brand">Senior Assistance Tracker</strong>
+          <nav className="nav-links" aria-label="Main navigation">
+            <NavLink to={isAdmin ? '/admin' : '/dashboard'}>Dashboard</NavLink>
+            {isAdmin ? (
+              <>
+                <NavLink to="/admin/senior-citizens">Senior Citizens</NavLink>
+                <NavLink to="/requests">Requests</NavLink>
+              </>
+            ) : (
+              <>
+                <NavLink to="/requests" end>My Requests</NavLink>
+                <NavLink to="/requests/new">New Request</NavLink>
+              </>
+            )}
+            <NavLink to="/profile">Profile</NavLink>
+          </nav>
+          <div className="nav-user">
+            <span>{user.name}</span>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
+          </div>
         </div>
-      </nav>
+      </header>
       <main className="container">
         <Outlet />
       </main>

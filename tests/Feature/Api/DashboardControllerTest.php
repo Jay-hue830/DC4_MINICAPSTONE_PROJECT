@@ -39,4 +39,27 @@ class DashboardControllerTest extends TestCase
             ->assertJsonPath('data.requests_by_type.0.id', $assistanceType->id)
             ->assertJsonPath('data.requests_by_type.0.total', 2);
     }
+
+    public function test_senior_dashboard_returns_only_the_users_request_statistics(): void
+    {
+        $user = User::factory()->senior()->create();
+        $seniorCitizen = SeniorCitizen::factory()->for($user)->create();
+        $assistanceType = AssistanceType::factory()->create();
+        AssistanceRequest::factory()
+            ->for($seniorCitizen, 'seniorCitizen')
+            ->for($assistanceType, 'assistanceType')
+            ->create(['status' => 'pending']);
+        AssistanceRequest::factory()->create(['status' => 'approved']);
+
+        $this->actingAs($user)
+            ->getJson('/api/dashboard')
+            ->assertOk()
+            ->assertJsonPath('data.total_requests', 1)
+            ->assertJsonPath('data.pending_requests', 1)
+            ->assertJsonPath('data.requests_by_status.pending', 1)
+            ->assertJsonPath('data.requests_by_status.approved', 0)
+            ->assertJsonPath('data.requests_by_type.0.total', 1)
+            ->assertJsonCount(1, 'data.recent_requests')
+            ->assertJsonMissingPath('data.total_senior_citizens');
+    }
 }

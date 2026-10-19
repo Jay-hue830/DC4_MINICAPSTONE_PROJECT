@@ -13,13 +13,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin and senior (controller scopes seniors to their own data)
     Route::get('assistance-types', AssistanceTypeController::class);
     Route::apiResource('assistance-requests', AssistanceRequestController::class);
+    Route::get('dashboard', DashboardController::class);
 
     // Admin only
     Route::middleware('admin')->group(function () {
         Route::patch('assistance-requests/{assistance_request}/status',
             [AssistanceRequestController::class, 'updateStatus']);
         Route::apiResource('senior-citizens', SeniorCitizenController::class);
-        Route::get('dashboard', DashboardController::class);
     });
 });
 
