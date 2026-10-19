@@ -347,8 +347,52 @@ class AssistanceRequestControllerTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath(
                 'errors.status.0',
-                'Allowed next statuses: approved, rejected, cancelled'
+                'Allowed next statuses: approved, rejected'
             );
+
+        $this->assertDatabaseHas('assistance_requests', [
+            'id' => $assistanceRequest->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_admin_must_follow_the_approved_in_progress_completed_workflow(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $assistanceRequest = AssistanceRequest::factory()->approved()->create();
+
+        $this->actingAs($admin)
+            ->patchJson("/api/assistance-requests/{$assistanceRequest->id}/status", [
+                'status' => 'completed',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.status.0', 'Allowed next statuses: in_progress');
+
+        $this->assertDatabaseHas('assistance_requests', [
+            'id' => $assistanceRequest->id,
+            'status' => 'approved',
+        ]);
+
+        $this->patchJson("/api/assistance-requests/{$assistanceRequest->id}/status", [
+            'status' => 'in_progress',
+        ])->assertOk()->assertJsonPath('data.status', 'in_progress');
+
+        $this->patchJson("/api/assistance-requests/{$assistanceRequest->id}/status", [
+            'status' => 'completed',
+        ])->assertOk()->assertJsonPath('data.status', 'completed');
+    }
+
+    public function test_admin_cannot_cancel_a_request_outside_the_final_workflow(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $assistanceRequest = AssistanceRequest::factory()->create(['status' => 'pending']);
+
+        $this->actingAs($admin)
+            ->patchJson("/api/assistance-requests/{$assistanceRequest->id}/status", [
+                'status' => 'cancelled',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.status.0', 'Allowed next statuses: approved, rejected');
 
         $this->assertDatabaseHas('assistance_requests', [
             'id' => $assistanceRequest->id,

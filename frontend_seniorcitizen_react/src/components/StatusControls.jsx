@@ -11,7 +11,6 @@ const ACTION_LABELS = {
   rejected: 'Reject',
   in_progress: 'Start In Progress',
   completed: 'Mark Completed',
-  cancelled: 'Cancel Request',
 }
 
 export default function StatusControls({ request, onChanged, onError }) {
@@ -85,7 +84,7 @@ export default function StatusControls({ request, onChanged, onError }) {
         {options.map((status) => (
           <Button
             key={status}
-            variant={status === 'rejected' || status === 'cancelled' ? 'danger' : 'primary'}
+            variant={status === 'rejected' ? 'danger' : 'primary'}
             onClick={() => {
               setError('')
               setTarget(status)

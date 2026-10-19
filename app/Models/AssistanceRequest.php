@@ -13,9 +13,9 @@ class AssistanceRequest extends Model
     public const STATUSES = ['pending', 'approved', 'rejected', 'in_progress', 'completed', 'cancelled'];
 
     public const TRANSITIONS = [
-        'pending' => ['approved', 'rejected', 'cancelled'],
-        'approved' => ['in_progress', 'completed', 'cancelled'],
-        'in_progress' => ['completed', 'cancelled'],
+        'pending' => ['approved', 'rejected'],
+        'approved' => ['in_progress'],
+        'in_progress' => ['completed'],
         'rejected' => [],
         'completed' => [],
         'cancelled' => [],
