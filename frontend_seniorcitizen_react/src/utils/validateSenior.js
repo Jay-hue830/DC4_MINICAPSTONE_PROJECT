@@ -5,8 +5,10 @@ export function validateSenior(form) {
     errors.first_name = 'First name is required.'
   }
 
-  if (form.user_id === '' || form.user_id === null) {
-    errors.user_id = 'An associated user is required.'
+  if (!String(form.user_id ?? '').trim()) {
+    errors.user_id = 'An associated user ID is required.'
+  } else if (!/^[1-9]\d*$/.test(String(form.user_id))) {
+    errors.user_id = 'Enter a valid existing user ID.'
   }
 
   if (!form.last_name?.trim()) {

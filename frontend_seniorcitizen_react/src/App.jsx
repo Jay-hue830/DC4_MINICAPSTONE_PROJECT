@@ -5,7 +5,9 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import AdminDashboard from './pages/AdminDashboard'
 import SeniorCitizenDashboard from './pages/SeniorCitizenDashboard'
-import SeniorCitizens from './pages/SeniorCitizens'
+import SeniorList from './pages/admin/seniors/SeniorList'
+import SeniorForm from './pages/admin/seniors/SeniorForm'
+import SeniorDetail from './pages/admin/seniors/SeniorDetail'
 import RequestList from './pages/requests/RequestList'
 import RequestForm from './pages/requests/RequestForm'
 import Profile from './pages/Profile'
@@ -47,9 +49,37 @@ export default function App() {
         />
         <Route
           path="/senior-citizens"
+          element={<Navigate to="/admin/senior-citizens" replace />}
+        />
+        <Route
+          path="/admin/senior-citizens"
           element={
             <ProtectedRoute roles={['admin']}>
-              <SeniorCitizens />
+              <SeniorList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/senior-citizens/new"
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <SeniorForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/senior-citizens/:id/edit"
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <SeniorForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/senior-citizens/:id"
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <SeniorDetail />
             </ProtectedRoute>
           }
         />

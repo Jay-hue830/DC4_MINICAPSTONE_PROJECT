@@ -25,7 +25,7 @@ export default function MainLayout() {
         <strong>Senior Assistance Tracker</strong>
         <div className="nav-links">
           <NavLink to={isAdmin ? '/admin' : '/my-dashboard'}>Dashboard</NavLink>
-          {isAdmin && <NavLink to="/senior-citizens">Senior Citizens</NavLink>}
+          {isAdmin && <NavLink to="/admin/senior-citizens">Senior Citizens</NavLink>}
           <NavLink to="/requests">Requests</NavLink>
           <NavLink to="/profile">Profile</NavLink>
           <button onClick={handleLogout}>Logout</button>

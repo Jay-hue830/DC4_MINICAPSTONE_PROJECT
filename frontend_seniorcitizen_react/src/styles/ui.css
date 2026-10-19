@@ -212,6 +212,26 @@ table.table {
   margin: 0;
 }
 
+.senior-form-page h1,
+.senior-detail-page h1 {
+  margin: 0 0 16px;
+  color: #1e293b;
+  font-size: 1.5rem;
+}
+
+.senior-form {
+  max-width: 560px;
+}
+
+.form-help {
+  margin: 0 0 14px;
+  color: #555;
+}
+
+.senior-detail-actions {
+  margin-top: 16px;
+}
+
 @media (max-width: 600px) {
   .table thead {
     display: none;
@@ -250,5 +270,10 @@ table.table {
 
   .detail-grid dt {
     margin-top: 8px;
+  }
+
+  .senior-detail-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
