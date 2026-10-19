@@ -12,6 +12,50 @@ class AssistanceRequestControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_admin_can_paginate_and_filter_assistance_requests(): void
+    {
+        $admin = User::factory()->admin()->create();
+        AssistanceRequest::factory()->count(3)->create(['status' => 'pending']);
+        AssistanceRequest::factory()->create(['status' => 'approved']);
+
+        $firstPage = $this->actingAs($admin)
+            ->getJson('/api/assistance-requests?status=pending&per_page=2&page=1')
+            ->assertOk()
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.last_page', 2)
+            ->assertJsonPath('meta.per_page', 2)
+            ->assertJsonPath('meta.total', 3)
+            ->assertJsonPath('data.0.status', 'pending')
+            ->assertJsonPath('data.1.status', 'pending')
+            ->assertJsonPath('links.next', fn ($url) => str_contains($url, 'status=pending')
+                && str_contains($url, 'per_page=2'));
+
+        $secondPage = $this->getJson('/api/assistance-requests?status=pending&per_page=2&page=2')
+            ->assertOk()
+            ->assertJsonPath('meta.current_page', 2)
+            ->assertJsonPath('meta.total', 3)
+            ->assertJsonCount(1, 'data');
+
+        $this->assertNotSame(
+            $firstPage->json('data.0.id'),
+            $secondPage->json('data.0.id')
+        );
+    }
+
+    public function test_assistance_request_page_size_is_limited_to_fifty(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->getJson('/api/assistance-requests?per_page=500')
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 50);
+
+        $this->getJson('/api/assistance-requests?per_page=0')
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 1);
+    }
+
     public function test_senior_citizen_cannot_view_another_users_request(): void
     {
         $user = User::factory()->senior()->create();

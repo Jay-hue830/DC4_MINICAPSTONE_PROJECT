@@ -24,7 +24,7 @@ class AssistanceRequestController extends Controller
         $requestedSort = $request->query('sort_by');
         $sortBy = in_array($requestedSort, $sortable, true) ? $requestedSort : 'created_at';
         $sortDir = $request->query('sort_dir') === 'asc' ? 'asc' : 'desc';
-        $perPage = min(max($request->integer('per_page', 10), 1), 100);
+        $perPage = min(max($request->integer('per_page', 10), 1), 50);
 
         $requests = AssistanceRequest::query()
             ->with(self::WITH)
