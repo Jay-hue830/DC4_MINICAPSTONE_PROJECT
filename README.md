@@ -2,6 +2,8 @@
 
 A full-stack web application for administering senior citizen profiles and tracking assistance requests from submission through review and completion.
 
+**Developer:** Jaycel Aplacador
+
 ## Project description
 
 The system is designed for a Barangay or OSCA office to receive, review, and track senior citizens' requests for assistance. It replaces scattered paper or chat-based tracking with a shared request status and a dashboard of current records.
@@ -110,6 +112,17 @@ The application uses the `admin` and `senior_citizen` roles. The MySQL database 
 The assistance-request list supports `search`, `assistance_type_id`, `status`, `date_from`, `date_to`, `page`, and `per_page` query parameters. `per_page` is capped at 50.
 
 The [Postman collection (Collection v2.1)](./docs/Senior-Citizen-Assistance-API.postman_collection.json) and [entity relationship diagram source](./docs/erd.md) are in `docs/`.
+
+## Presentation outline (8 slides maximum)
+
+1. Title and developer name
+2. Client and problem
+3. Solution and features
+4. User roles and status workflow
+5. System architecture and ERD
+6. Live-demo screenshots: dashboard and filtered request list
+7. Security and quality: authentication, validation, roles, and tests
+8. Handover: README, demo accounts, next steps, and closing
 
 ## Demo video outline (about 7 minutes)
 
