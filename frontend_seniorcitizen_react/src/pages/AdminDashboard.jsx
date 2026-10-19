@@ -7,6 +7,9 @@ export default function AdminDashboard() {
       <Link className="btn btn-primary" to="/admin/senior-citizens">
         Manage Senior Citizens
       </Link>
+      <Link className="btn btn-secondary" to="/requests">
+        All Assistance Requests
+      </Link>
     </>
   )
 }

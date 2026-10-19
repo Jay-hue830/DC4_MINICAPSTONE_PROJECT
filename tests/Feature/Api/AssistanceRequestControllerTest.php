@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\AssistanceRequest;
+use App\Models\AssistanceType;
 use App\Models\SeniorCitizen;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -68,6 +69,120 @@ class AssistanceRequestControllerTest extends TestCase
             ->getJson("/api/assistance-requests/{$assistanceRequest->id}")
             ->assertForbidden()
             ->assertJsonPath('message', 'You cannot access this request.');
+    }
+
+    public function test_senior_citizen_request_creation_uses_its_own_profile_and_pending_status(): void
+    {
+        $user = User::factory()->senior()->create();
+        $seniorCitizen = SeniorCitizen::factory()->for($user)->create();
+        $otherSeniorCitizen = SeniorCitizen::factory()->create();
+        $assistanceType = AssistanceType::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/assistance-requests', [
+                'senior_citizen_id' => $otherSeniorCitizen->id,
+                'assistance_type_id' => $assistanceType->id,
+                'title' => 'Request for transportation',
+                'description' => 'I need transportation to my medical appointment.',
+                'date_needed' => now()->addDays(3)->toDateString(),
+                'status' => 'completed',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.senior_citizen.id', $seniorCitizen->id)
+            ->assertJsonPath('data.status', 'pending');
+
+        $this->assertDatabaseHas('assistance_requests', [
+            'senior_citizen_id' => $seniorCitizen->id,
+            'status' => 'pending',
+            'title' => 'Request for transportation',
+        ]);
+    }
+
+    public function test_senior_citizen_can_update_only_its_own_pending_request(): void
+    {
+        $user = User::factory()->senior()->create();
+        $seniorCitizen = SeniorCitizen::factory()->for($user)->create();
+        $pendingRequest = AssistanceRequest::factory()
+            ->for($seniorCitizen, 'seniorCitizen')
+            ->create();
+        $approvedRequest = AssistanceRequest::factory()
+            ->for($seniorCitizen, 'seniorCitizen')
+            ->approved()
+            ->create();
+        $otherSeniorRequest = AssistanceRequest::factory()->create();
+
+        $this->actingAs($user)
+            ->putJson("/api/assistance-requests/{$pendingRequest->id}", [
+                'title' => 'Updated request title',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Updated request title');
+
+        $this->putJson("/api/assistance-requests/{$approvedRequest->id}", [
+            'title' => 'Should be forbidden',
+        ])->assertForbidden();
+
+        $this->putJson("/api/assistance-requests/{$otherSeniorRequest->id}", [
+            'title' => 'Should be forbidden',
+        ])->assertForbidden();
+    }
+
+    public function test_admin_can_update_pending_and_approved_requests_only(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $pendingRequest = AssistanceRequest::factory()->create();
+        $approvedRequest = AssistanceRequest::factory()->approved()->create();
+        $completedRequest = AssistanceRequest::factory()->create(['status' => 'completed']);
+
+        $this->actingAs($admin)
+            ->putJson("/api/assistance-requests/{$pendingRequest->id}", [
+                'title' => 'Pending request updated',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Pending request updated');
+
+        $this->putJson("/api/assistance-requests/{$approvedRequest->id}", [
+            'title' => 'Approved request updated',
+        ])->assertOk()
+            ->assertJsonPath('data.title', 'Approved request updated');
+
+        $this->putJson("/api/assistance-requests/{$completedRequest->id}", [
+            'title' => 'Should be forbidden',
+        ])->assertForbidden();
+    }
+
+    public function test_only_admin_can_delete_assistance_requests(): void
+    {
+        $senior = User::factory()->senior()->create();
+        $seniorCitizen = SeniorCitizen::factory()->for($senior)->create();
+        $pendingRequest = AssistanceRequest::factory()
+            ->for($seniorCitizen, 'seniorCitizen')
+            ->create();
+
+        $this->actingAs($senior)
+            ->deleteJson("/api/assistance-requests/{$pendingRequest->id}")
+            ->assertForbidden();
+
+        $admin = User::factory()->admin()->create();
+        $this->actingAs($admin)
+            ->deleteJson("/api/assistance-requests/{$pendingRequest->id}")
+            ->assertNoContent();
+
+        $this->assertDatabaseMissing('assistance_requests', [
+            'id' => $pendingRequest->id,
+        ]);
+    }
+
+    public function test_only_admin_can_update_request_status(): void
+    {
+        $senior = User::factory()->senior()->create();
+        $assistanceRequest = AssistanceRequest::factory()->create();
+
+        $this->actingAs($senior)
+            ->patchJson("/api/assistance-requests/{$assistanceRequest->id}/status", [
+                'status' => 'approved',
+            ])
+            ->assertForbidden();
     }
 
     public function test_admin_can_transition_a_pending_request_and_record_review_details(): void

@@ -3,16 +3,18 @@ import { Link, useParams } from 'react-router-dom'
 import Alert from '../../components/Alert'
 import Loading from '../../components/Loading'
 import StatusBadge from '../../components/StatusBadge'
+import StatusControls from '../../components/StatusControls'
 import useAuth from '../../hooks/useAuth'
 import { getRequest } from '../../services/requestService'
 import { canEditRequest } from '../../utils/requestRules'
 
-export default function AssistanceRequestDetail() {
+export default function AssistanceRequestDetails() {
   const { id } = useParams()
   const { user } = useAuth()
   const [request, setRequest] = useState(null)
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [success, setSuccess] = useState('')
+  const [loadedId, setLoadedId] = useState(null)
 
   useEffect(() => {
     let isActive = true
@@ -22,19 +24,24 @@ export default function AssistanceRequestDetail() {
         const { data } = await getRequest(id)
         if (isActive) {
           setRequest(data.data ?? data)
+          setError('')
         }
       } catch (requestError) {
         if (isActive) {
+          setRequest(null)
+          const status = requestError.response?.status
           setError(
-            requestError.response?.status === 404
+            status === 404
               ? 'Assistance request not found.'
-              : requestError.response?.data?.message ??
+              : status === 403
+                ? 'You are not allowed to view this request.'
+                : requestError.response?.data?.message ??
                   'Failed to load request details.',
           )
         }
       } finally {
         if (isActive) {
-          setLoading(false)
+          setLoadedId(id)
         }
       }
     }
@@ -46,16 +53,22 @@ export default function AssistanceRequestDetail() {
     }
   }, [id])
 
-  if (loading) {
+  if (loadedId !== id) {
     return <Loading text="Loading request details..." />
   }
 
   return (
     <section className="page">
-      <Alert type="error">{error}</Alert>
+      <h1>Assistance Request Details</h1>
+      <Alert type="success" onClose={() => setSuccess('')}>
+        {success}
+      </Alert>
+      <Alert type="error" onClose={() => setError('')}>
+        {error}
+      </Alert>
       {request ? (
         <article className="card request-detail">
-          <h1>{request.title}</h1>
+          <h2>{request.title}</h2>
           <dl className="detail-grid">
             {user.role === 'admin' && (
               <>
@@ -83,8 +96,25 @@ export default function AssistanceRequestDetail() {
                 <dd>{request.admin_remarks}</dd>
               </>
             )}
+            <dt>Description</dt>
+            <dd style={{ whiteSpace: 'pre-wrap' }}>
+              {request.description ?? '-'}
+            </dd>
           </dl>
-          <p className="request-description">{request.description}</p>
+          {user.role === 'admin' && (
+            <div style={{ marginTop: 20 }}>
+              <h3>Update Status</h3>
+              <StatusControls
+                request={request}
+                onChanged={(message, updatedRequest) => {
+                  setRequest(updatedRequest)
+                  setSuccess(message)
+                  setError('')
+                }}
+                onError={setError}
+              />
+            </div>
+          )}
           <div className="actions">
             {canEditRequest(user, request) && (
               <Link

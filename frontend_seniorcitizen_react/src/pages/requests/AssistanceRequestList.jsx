@@ -255,7 +255,7 @@ export default function AssistanceRequestList() {
                         Edit
                       </Link>
                     )}
-                    {canDeleteRequest(user, request) && (
+                    {canDeleteRequest(user) && (
                       <Button
                         variant="danger"
                         onClick={() => setDeleteTarget(request)}

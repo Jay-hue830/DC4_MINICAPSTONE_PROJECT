@@ -10,7 +10,7 @@ import SeniorForm from './pages/admin/seniors/SeniorForm'
 import SeniorDetail from './pages/admin/seniors/SeniorDetail'
 import AssistanceRequestList from './pages/requests/AssistanceRequestList'
 import AssistanceRequestForm from './pages/requests/AssistanceRequestForm'
-import AssistanceRequestDetail from './pages/requests/AssistanceRequestDetail'
+import AssistanceRequestDetails from './pages/requests/AssistanceRequestDetails'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 
@@ -37,7 +37,7 @@ export default function App() {
         />
         <Route
           path="/requests/:id"
-          element={<AssistanceRequestDetail />}
+          element={<AssistanceRequestDetails />}
         />
         <Route
           path="/my-dashboard"

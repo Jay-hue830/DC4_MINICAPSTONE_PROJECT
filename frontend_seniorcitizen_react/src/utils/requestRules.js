@@ -21,15 +21,13 @@ export function canEditRequest(user, request) {
     return false
   }
 
-  return user.role === 'admin' || request.status === 'pending'
+  return user.role === 'admin'
+    ? ['pending', 'approved'].includes(request.status)
+    : request.status === 'pending'
 }
 
-export function canDeleteRequest(user, request) {
-  if (!user || !request) {
-    return false
-  }
-
-  return user.role === 'admin' || request.status === 'pending'
+export function canDeleteRequest(user) {
+  return user?.role === 'admin'
 }
 
 export function canChangeRequestStatus(user, request) {

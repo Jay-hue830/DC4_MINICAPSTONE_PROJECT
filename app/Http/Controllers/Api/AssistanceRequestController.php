@@ -96,7 +96,11 @@ class AssistanceRequestController extends Controller
 
     public function destroy(Request $request, AssistanceRequest $assistanceRequest): Response
     {
-        $this->authorizeAccess($request, $assistanceRequest, write: true);
+        abort_unless(
+            $request->user()->isAdmin(),
+            Response::HTTP_FORBIDDEN,
+            'Only administrators can delete assistance requests.'
+        );
         $assistanceRequest->delete();
 
         return response()->noContent();
@@ -138,6 +142,12 @@ class AssistanceRequestController extends Controller
         $user = $request->user();
 
         if ($user->isAdmin()) {
+            abort_if(
+                $write && ! in_array($assistanceRequest->status, ['pending', 'approved'], true),
+                Response::HTTP_FORBIDDEN,
+                'Only pending or approved requests can be changed.'
+            );
+
             return;
         }
 
