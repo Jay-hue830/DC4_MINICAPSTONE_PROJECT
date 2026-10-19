@@ -225,4 +225,25 @@ class AssistanceRequestControllerTest extends TestCase
             'reviewed_by' => null,
         ]);
     }
+
+    public function test_admin_cannot_complete_a_pending_request_without_approval(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $assistanceRequest = AssistanceRequest::factory()->create(['status' => 'pending']);
+
+        $this->actingAs($admin)
+            ->patchJson("/api/assistance-requests/{$assistanceRequest->id}/status", [
+                'status' => 'completed',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath(
+                'errors.status.0',
+                'Allowed next statuses: approved, rejected, cancelled'
+            );
+
+        $this->assertDatabaseHas('assistance_requests', [
+            'id' => $assistanceRequest->id,
+            'status' => 'pending',
+        ]);
+    }
 }

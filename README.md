@@ -1,58 +1,107 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Senior Citizen Request and Assistance Tracking System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A full-stack web application for administering senior citizen profiles and tracking assistance requests from submission through review and completion.
 
-## About Laravel
+## Technology stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Backend: PHP 8.3, Laravel 13, Laravel Sanctum, Eloquent
+- Frontend: React 19, Vite, React Router, Axios
+- Database: SQLite by default; MySQL is supported through Laravel database configuration
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Setup
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Run backend commands from the repository root.
 
-## Learning Laravel
+### Backend
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```sh
+composer install
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Copy `.env.example` to `.env`, then configure the database settings. The example uses SQLite; create `database/database.sqlite` if it does not exist. For MySQL, set `DB_CONNECTION=mysql` and configure `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD`.
 
-## Contributing
+```sh
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+The API is available at `http://localhost:8000/api`.
 
-## Code of Conduct
+### Frontend
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+In a second terminal:
 
-## Security Vulnerabilities
+```sh
+cd frontend_seniorcitizen_react
+npm install
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Copy `frontend_seniorcitizen_react/.env.example` to `.env` if needed. Set `VITE_API_URL=http://localhost:8000/api`, then run:
 
-## License
+```sh
+npm run dev
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The frontend is available at `http://localhost:5173`. For a production build, run `npm run build` from the frontend directory.
+
+### Seeded demo accounts
+
+These credentials are for local development databases created with `php artisan migrate --seed`. Do not reuse them in a deployed environment.
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin@seniorcare.test` | `Admin#Care2026` |
+| Senior citizen | `lolita.santos@seniorcare.test` | `Senior#2026` |
+
+## Features
+
+- Token-based registration, login, and logout using Laravel Sanctum.
+- Role-based admin and senior-citizen access.
+- Admin dashboard statistics and recent request data.
+- Admin senior-citizen management with search, pagination, detail, and edit.
+- Senior self-registration creates a linked senior profile; registration always assigns the senior role.
+- Senior citizens can submit, view, and edit their own pending assistance requests.
+- Admins can view and delete assistance requests and manage valid status transitions.
+- Senior profiles with assistance-request history cannot be deleted.
+- Responsive layouts for lists and dashboards.
+
+## API overview
+
+All protected endpoints require `Authorization: Bearer <token>` and `Accept: application/json`.
+
+| Method | Endpoint | Access | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/api/register` | Public | Register a senior and create their profile |
+| `POST` | `/api/login` | Public | Obtain a bearer token |
+| `GET` | `/api/user` | Authenticated | Get the current user |
+| `POST` | `/api/logout` | Authenticated | Revoke the current token |
+| `GET` | `/api/dashboard` | Authenticated | Get role-scoped dashboard statistics |
+| `GET` | `/api/assistance-types` | Authenticated | List assistance types |
+| `GET`, `POST` | `/api/assistance-requests` | Authenticated | List (paginated) or create requests |
+| `GET` | `/api/assistance-requests/{id}` | Admin or owning senior | View a request |
+| `PUT`, `PATCH` | `/api/assistance-requests/{id}` | Admin (pending/approved) or owning senior (pending) | Update a request |
+| `DELETE` | `/api/assistance-requests/{id}` | Admin | Delete a request |
+| `PATCH` | `/api/assistance-requests/{id}/status` | Admin | Transition a request to an allowed status |
+| `GET`, `POST` | `/api/senior-citizens` | Admin | List (paginated) or create senior profiles |
+| `GET`, `PUT`, `PATCH`, `DELETE` | `/api/senior-citizens/{id}` | Admin | View, update, or delete a senior profile |
+
+Request status transitions are defined by the backend. Rejection requires an admin remark. Deleting a senior profile with request history returns `409 Conflict`.
+
+The [Postman collection](./docs/Senior-Citizen-Assistance-API.postman_collection.json) and [entity relationship diagram](./docs/erd.md) are in `docs/`.
+
+## Tests and checks
+
+```sh
+php artisan test --compact
+vendor/bin/pint --dirty --format agent
+cd frontend_seniorcitizen_react
+npm run lint
+npm run build
+```
+
+`php artisan migrate:fresh --seed` drops all existing tables before rebuilding them. Only use it against a disposable development database.
+
+## AI usage
+
+GitHub Copilot and Claude were used to assist with code generation and debugging. The project author reviewed and tested the resulting changes.

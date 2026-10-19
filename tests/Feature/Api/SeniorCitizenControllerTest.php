@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\AssistanceRequest;
 use App\Models\SeniorCitizen;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 class SeniorCitizenControllerTest extends TestCase
@@ -98,5 +100,52 @@ class SeniorCitizenControllerTest extends TestCase
         $this->getJson('/api/senior-citizens?per_page=0')
             ->assertOk()
             ->assertJsonPath('meta.per_page', 1);
+    }
+
+    public function test_admin_cannot_delete_a_senior_citizen_with_assistance_requests(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $seniorCitizen = SeniorCitizen::factory()->create();
+        $assistanceRequest = AssistanceRequest::factory()
+            ->for($seniorCitizen, 'seniorCitizen')
+            ->create();
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/senior-citizens/{$seniorCitizen->id}")
+            ->assertConflict()
+            ->assertJsonPath(
+                'message',
+                'This senior citizen has assistance requests and cannot be deleted.'
+            );
+
+        $this->assertDatabaseHas('senior_citizens', ['id' => $seniorCitizen->id]);
+        $this->assertDatabaseHas('assistance_requests', ['id' => $assistanceRequest->id]);
+    }
+
+    public function test_admin_can_delete_a_senior_citizen_without_assistance_requests(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $seniorCitizen = SeniorCitizen::factory()->create();
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/senior-citizens/{$seniorCitizen->id}")
+            ->assertOk()
+            ->assertJsonPath('message', 'Senior citizen deleted.');
+
+        $this->assertDatabaseMissing('senior_citizens', ['id' => $seniorCitizen->id]);
+    }
+
+    public function test_senior_citizen_and_guest_cannot_access_senior_management_routes(): void
+    {
+        $senior = User::factory()->senior()->create();
+
+        $this->actingAs($senior)
+            ->getJson('/api/senior-citizens')
+            ->assertForbidden();
+
+        Auth::forgetGuards();
+
+        $this->getJson('/api/senior-citizens')
+            ->assertUnauthorized();
     }
 }

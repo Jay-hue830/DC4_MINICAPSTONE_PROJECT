@@ -67,10 +67,16 @@ class SeniorCitizenController extends Controller
         return new SeniorCitizenResource($seniorCitizen->load('user:id,name,email'));
     }
 
-    public function destroy(SeniorCitizen $seniorCitizen): Response
+    public function destroy(SeniorCitizen $seniorCitizen): JsonResponse|Response
     {
+        if ($seniorCitizen->assistanceRequests()->exists()) {
+            return response()->json([
+                'message' => 'This senior citizen has assistance requests and cannot be deleted.',
+            ], Response::HTTP_CONFLICT);
+        }
+
         $seniorCitizen->delete();
 
-        return response()->noContent();
+        return response()->json(['message' => 'Senior citizen deleted.']);
     }
 }

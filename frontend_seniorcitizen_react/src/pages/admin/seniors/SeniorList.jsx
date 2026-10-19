@@ -236,8 +236,8 @@ export default function SeniorList() {
             <strong>
               {toDelete.first_name} {toDelete.last_name}
             </strong>
-            . Their associated assistance requests will also be deleted. This
-            cannot be undone.
+            . Senior citizens with assistance request history cannot be
+            deleted.
           </p>
         </Modal>
       )}
