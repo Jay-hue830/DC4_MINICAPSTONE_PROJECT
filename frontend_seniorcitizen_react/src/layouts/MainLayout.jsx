@@ -26,7 +26,9 @@ export default function MainLayout() {
         <div className="navbar-inner">
           <strong className="brand">Senior Assistance Tracker</strong>
           <nav className="nav-links" aria-label="Main navigation">
-            <NavLink to={isAdmin ? '/admin' : '/dashboard'}>Dashboard</NavLink>
+            <NavLink to={isAdmin ? '/admin/dashboard' : '/dashboard'}>
+              Dashboard
+            </NavLink>
             {isAdmin ? (
               <>
                 <NavLink to="/admin/senior-citizens">Senior Citizens</NavLink>

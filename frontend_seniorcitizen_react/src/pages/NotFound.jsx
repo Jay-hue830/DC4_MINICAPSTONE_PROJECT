@@ -3,7 +3,11 @@ import useAuth from '../hooks/useAuth'
 
 export default function NotFound() {
   const { user } = useAuth()
-  const home = !user ? '/login' : user.role === 'admin' ? '/admin' : '/dashboard'
+  const home = !user
+    ? '/login'
+    : user.role === 'admin'
+      ? '/admin/dashboard'
+      : '/dashboard'
 
   return (
     <div className="page empty">

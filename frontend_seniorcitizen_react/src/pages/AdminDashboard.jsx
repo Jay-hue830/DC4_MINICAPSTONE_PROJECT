@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import Alert from '../components/Alert'
+import Button from '../components/Button'
 import Loading from '../components/Loading'
 import StatCard from '../components/StatCard'
 import useAuth from '../hooks/useAuth'
@@ -7,25 +8,54 @@ import useDashboard from '../hooks/useDashboard'
 
 export default function AdminDashboard() {
   const { user } = useAuth()
-  const { stats, loading, error } = useDashboard()
-  const requestsByStatus = stats?.requests_by_status ?? {}
+  const { stats, loading, error, reload } = useDashboard()
 
   return (
     <section className="page">
       <h1>Admin Dashboard</h1>
       <p>Welcome, {user.name}</p>
-      <Alert type="error">{error}</Alert>
-      {loading ? (
+      {error ? (
+        <Alert type="error">
+          <>
+            {error}{' '}
+            <Button variant="secondary" onClick={reload}>
+              Retry
+            </Button>
+          </>
+        </Alert>
+      ) : loading ? (
         <Loading />
       ) : (
         stats && (
           <div className="stat-grid">
-            <StatCard label="Senior Citizens" value={stats.total_senior_citizens} />
-            <StatCard label="Total Requests" value={stats.total_requests} />
-            <StatCard label="Pending" value={requestsByStatus.pending} tone="warn" />
-            <StatCard label="Approved" value={requestsByStatus.approved} tone="info" />
-            <StatCard label="Completed" value={requestsByStatus.completed} tone="good" />
-            <StatCard label="Rejected" value={requestsByStatus.rejected} tone="bad" />
+            <StatCard
+              label="Total Senior Citizens"
+              value={stats.total_senior_citizens}
+            />
+            <StatCard
+              label="Total Assistance Requests"
+              value={stats.total_requests}
+            />
+            <StatCard
+              label="Pending Requests"
+              value={stats.pending_requests}
+              tone="warn"
+            />
+            <StatCard
+              label="Approved Requests"
+              value={stats.approved_requests}
+              tone="info"
+            />
+            <StatCard
+              label="Completed Requests"
+              value={stats.completed_requests}
+              tone="good"
+            />
+            <StatCard
+              label="Rejected Requests"
+              value={stats.rejected_requests}
+              tone="bad"
+            />
           </div>
         )
       )}

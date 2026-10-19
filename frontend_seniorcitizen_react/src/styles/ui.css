@@ -275,7 +275,41 @@ table.table {
 
 .request-description {
   margin: 1rem 0;
-  white-space: pre-wrap;
+}
+
+.request-filter {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+  margin: 0 0 1rem;
+}
+
+.request-filter input,
+.request-filter select,
+.request-filter button {
+  min-width: 0;
+  padding: 0.6rem;
+  font-size: 1rem;
+}
+
+.stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+}
+
+@media (max-width: 600px) {
+  .request-filter {
+    grid-template-columns: 1fr;
+  }
 }
 
 .senior-form-page h1,

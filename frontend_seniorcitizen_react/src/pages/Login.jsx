@@ -17,7 +17,7 @@ export default function Login() {
 
     try {
       const user = await login(form)
-      const home = user.role === 'admin' ? '/admin' : '/dashboard'
+      const home = user.role === 'admin' ? '/admin/dashboard' : '/dashboard'
       const from = location.state?.from?.pathname
       const allowed = from && (user.role === 'admin' || !from.startsWith('/admin'))
       navigate(allowed ? from : home, { replace: true })

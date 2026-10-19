@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getDashboard } from '../services/dashboardService'
 
 export default function useDashboard() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let isActive = true
@@ -30,11 +31,16 @@ export default function useDashboard() {
     }
 
     loadDashboard()
-
     return () => {
       isActive = false
     }
+  }, [reloadKey])
+
+  const reload = useCallback(() => {
+    setLoading(true)
+    setError('')
+    setReloadKey((currentKey) => currentKey + 1)
   }, [])
 
-  return { stats, loading, error }
+  return { stats, loading, error, reload }
 }
