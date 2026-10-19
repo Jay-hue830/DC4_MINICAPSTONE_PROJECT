@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import Alert from '../../components/Alert'
+import Button from '../../components/Button'
+import FormInput from '../../components/FormInput'
+import Loading from '../../components/Loading'
 import {
   createRequest,
   getAssistanceTypes,
@@ -108,85 +112,78 @@ export default function RequestForm() {
     }
   }
 
-  const fieldError = (name) =>
-    errors[name]?.[0] && <small className="field-error">{errors[name][0]}</small>
-
   if (loading) {
-    return <p>Loading request form...</p>
+    return <Loading text="Loading request form..." />
   }
 
   return (
     <section className="card request-form">
       <h1>{isEdit ? 'Edit Request' : 'New Request'}</h1>
-      {message && <p className="error" role="alert">{message}</p>}
+      <Alert type="error" onClose={() => setMessage('')}>
+        {message}
+      </Alert>
       <form onSubmit={handleSubmit}>
-        <div className="form-field">
-          <label htmlFor="request-title">Title</label>
-          <input
-            id="request-title"
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            maxLength={150}
-            required
-          />
-          {fieldError('title')}
-        </div>
+        <FormInput
+          label="Title"
+          name="title"
+          error={errors.title?.[0]}
+          value={form.title}
+          onChange={handleChange}
+          maxLength={150}
+          required
+        />
 
-        <div className="form-field">
-          <label htmlFor="request-type">Assistance Type</label>
-          <select
-            id="request-type"
-            name="assistance_type_id"
-            value={form.assistance_type_id}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select a type</option>
-            {types.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </select>
-          {fieldError('assistance_type_id')}
-        </div>
+        <FormInput
+          as="select"
+          label="Assistance Type"
+          name="assistance_type_id"
+          error={errors.assistance_type_id?.[0]}
+          value={form.assistance_type_id}
+          onChange={handleChange}
+          required
+        >
+          <option value="">Select a type</option>
+          {types.map((type) => (
+            <option key={type.id} value={type.id}>
+              {type.name}
+            </option>
+          ))}
+        </FormInput>
 
-        <div className="form-field">
-          <label htmlFor="request-date">Date Needed</label>
-          <input
-            id="request-date"
-            type="date"
-            name="date_needed"
-            value={form.date_needed}
-            onChange={handleChange}
-            min={minimumDate}
-            required
-          />
-          {fieldError('date_needed')}
-        </div>
+        <FormInput
+          label="Date Needed"
+          name="date_needed"
+          type="date"
+          error={errors.date_needed?.[0]}
+          value={form.date_needed}
+          onChange={handleChange}
+          min={minimumDate}
+          required
+        />
 
-        <div className="form-field">
-          <label htmlFor="request-description">Description</label>
-          <textarea
-            id="request-description"
-            name="description"
-            rows={4}
-            value={form.description}
-            onChange={handleChange}
-            maxLength={2000}
-            required
-          />
-          {fieldError('description')}
-        </div>
+        <FormInput
+          as="textarea"
+          label="Description"
+          name="description"
+          error={errors.description?.[0]}
+          rows={4}
+          value={form.description}
+          onChange={handleChange}
+          maxLength={2000}
+          required
+        />
 
         <div className="form-actions">
-          <button type="submit" disabled={submitting}>
-            {submitting ? 'Saving...' : 'Save'}
-          </button>
-          <button type="button" className="secondary-button" onClick={() => navigate('/requests')}>
+          <Button type="submit" loading={submitting}>
+            Save
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => navigate('/requests')}
+          >
             Cancel
-          </button>
+          </Button>
         </div>
       </form>
     </section>

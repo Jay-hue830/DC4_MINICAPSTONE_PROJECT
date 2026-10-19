@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth'
+import Alert from '../../components/Alert'
+import Button from '../../components/Button'
+import Loading from '../../components/Loading'
+import Modal from '../../components/Modal'
 import Pagination from '../../components/Pagination'
 import { deleteRequest, getRequests } from '../../services/requestService'
 
@@ -12,7 +16,8 @@ export default function RequestList() {
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [deletingId, setDeletingId] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
@@ -50,16 +55,17 @@ export default function RequestList() {
     }
   }, [page, refreshKey, status])
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this request?')) {
+  const handleDelete = async () => {
+    if (!deleteTarget) {
       return
     }
 
-    setDeletingId(id)
+    setDeleting(true)
     setError('')
 
     try {
-      await deleteRequest(id)
+      await deleteRequest(deleteTarget.id)
+      setDeleteTarget(null)
 
       if (items.length === 1 && page > 1) {
         setLoading(true)
@@ -71,7 +77,7 @@ export default function RequestList() {
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Delete failed.')
     } finally {
-      setDeletingId(null)
+      setDeleting(false)
     }
   }
 
@@ -91,6 +97,10 @@ export default function RequestList() {
           </Link>
         )}
       </header>
+
+      <Alert type="error" onClose={() => setError('')}>
+        {error}
+      </Alert>
 
       <div className="request-filter">
         <label htmlFor="request-status">Status</label>
@@ -114,14 +124,13 @@ export default function RequestList() {
         </select>
       </div>
 
-      {error && <p className="error" role="alert">{error}</p>}
       {loading ? (
-        <p>Loading requests...</p>
+        <Loading text="Loading requests..." />
       ) : items.length === 0 ? (
-        <p>No requests found.</p>
+        <p className="empty">No requests found.</p>
       ) : (
-        <div className="table-wrapper">
-          <table className="data-table">
+        <div className="table-wrap">
+          <table className="table">
             <thead>
               <tr>
                 {user.role === 'admin' && <th>Senior Citizen</th>}
@@ -136,23 +145,24 @@ export default function RequestList() {
               {items.map((request) => (
                 <tr key={request.id}>
                   {user.role === 'admin' && (
-                    <td>{request.senior_citizen?.full_name ?? '-'}</td>
+                    <td data-label="Senior Citizen">
+                      {request.senior_citizen?.full_name ?? '-'}
+                    </td>
                   )}
-                  <td>{request.title}</td>
-                  <td>{request.assistance_type?.name ?? '-'}</td>
-                  <td>{request.date_needed ?? '-'}</td>
-                  <td>{request.status.replace('_', ' ')}</td>
-                  <td className="table-actions">
+                  <td data-label="Title">{request.title}</td>
+                  <td data-label="Type">{request.assistance_type?.name ?? '-'}</td>
+                  <td data-label="Date Needed">{request.date_needed ?? '-'}</td>
+                  <td data-label="Status">{request.status.replace('_', ' ')}</td>
+                  <td data-label="Actions" className="actions">
                     {request.status === 'pending' && (
                       <>
                         <Link to={`/requests/${request.id}/edit`}>Edit</Link>
-                        <button
-                          type="button"
-                          disabled={deletingId === request.id}
-                          onClick={() => handleDelete(request.id)}
+                        <Button
+                          variant="danger"
+                          onClick={() => setDeleteTarget(request)}
                         >
-                          {deletingId === request.id ? 'Deleting...' : 'Delete'}
-                        </button>
+                          Delete
+                        </Button>
                       </>
                     )}
                   </td>
@@ -164,6 +174,33 @@ export default function RequestList() {
       )}
 
       <Pagination meta={meta} onPageChange={handlePageChange} />
+
+      {deleteTarget && (
+        <Modal
+          title="Delete assistance request?"
+          onClose={() => {
+            if (!deleting) {
+              setDeleteTarget(null)
+            }
+          }}
+          footer={
+            <>
+              <Button
+                variant="secondary"
+                disabled={deleting}
+                onClick={() => setDeleteTarget(null)}
+              >
+                Cancel
+              </Button>
+              <Button variant="danger" loading={deleting} onClick={handleDelete}>
+                Delete
+              </Button>
+            </>
+          }
+        >
+          <p>This will permanently delete &quot;{deleteTarget.title}&quot;.</p>
+        </Modal>
+      )}
     </section>
   )
 }

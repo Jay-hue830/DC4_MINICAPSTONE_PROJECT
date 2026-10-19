@@ -1,3 +1,5 @@
+import Button from './Button'
+
 export default function Pagination({ meta, onPageChange }) {
   if (!meta || meta.last_page <= 1) {
     return null
@@ -5,23 +7,23 @@ export default function Pagination({ meta, onPageChange }) {
 
   return (
     <nav className="pagination" aria-label="Pagination">
-      <button
-        type="button"
+      <Button
         disabled={meta.current_page === 1}
         onClick={() => onPageChange(meta.current_page - 1)}
+        variant="secondary"
       >
         Previous
-      </button>
+      </Button>
       <span>
-        Page {meta.current_page} of {meta.last_page}
+        Page {meta.current_page} of {meta.last_page} ({meta.total} total)
       </span>
-      <button
-        type="button"
+      <Button
         disabled={meta.current_page === meta.last_page}
         onClick={() => onPageChange(meta.current_page + 1)}
+        variant="secondary"
       >
         Next
-      </button>
+      </Button>
     </nav>
   )
 }
