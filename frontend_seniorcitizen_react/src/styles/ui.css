@@ -292,20 +292,6 @@ table.table {
   font-size: 1rem;
 }
 
-.stat-grid {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-.stat-card {
-  display: flex;
-  flex-direction: column;
-  padding: 1.25rem;
-}
-
-.stat-value {
-  font-size: 2rem;
-}
-
 @media (max-width: 600px) {
   .request-filter {
     grid-template-columns: 1fr;
@@ -369,12 +355,14 @@ table.table {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
   margin-top: 12px;
 }
 
 .stat-card {
+  display: flex;
+  flex-direction: column;
   padding: 16px;
   border-left: 5px solid #9ca3af;
   border-radius: 8px;
@@ -383,7 +371,7 @@ table.table {
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 2rem;
   font-weight: 700;
 }
 
