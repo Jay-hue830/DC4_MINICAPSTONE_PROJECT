@@ -8,8 +8,10 @@ import Loading from '../../components/Loading'
 import Modal from '../../components/Modal'
 import Pagination from '../../components/Pagination'
 import StatusBadge from '../../components/StatusBadge'
+import useDebounce from '../../hooks/useDebounce'
 import {
   deleteRequest,
+  getAssistanceTypes,
   getRequests,
   updateRequestStatus,
 } from '../../services/requestService'
@@ -27,11 +29,18 @@ export default function AssistanceRequestList() {
   const location = useLocation()
   const navigate = useNavigate()
   const [items, setItems] = useState([])
+  const [types, setTypes] = useState([])
   const [meta, setMeta] = useState(null)
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search)
+  const [typeId, setTypeId] = useState('')
   const [status, setStatus] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [typeError, setTypeError] = useState('')
   const [success, setSuccess] = useState(location.state?.message ?? '')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
@@ -49,12 +58,36 @@ export default function AssistanceRequestList() {
   useEffect(() => {
     let isActive = true
 
+    getAssistanceTypes()
+      .then(({ data }) => {
+        if (isActive) {
+          setTypes(data.data)
+        }
+      })
+      .catch(() => {
+        if (isActive) {
+          setTypeError('Failed to load assistance types.')
+        }
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let isActive = true
+
     const loadRequests = async () => {
       try {
         const { data } = await getRequests({
           page,
           per_page: 10,
+          search: debouncedSearch || undefined,
+          assistance_type_id: typeId || undefined,
           status: status || undefined,
+          date_from: dateFrom || undefined,
+          date_to: dateTo || undefined,
         })
 
         if (isActive) {
@@ -79,7 +112,18 @@ export default function AssistanceRequestList() {
     return () => {
       isActive = false
     }
-  }, [page, refreshKey, status])
+  }, [dateFrom, dateTo, debouncedSearch, page, refreshKey, status, typeId])
+
+  const clearFilters = () => {
+    setSearch('')
+    setTypeId('')
+    setStatus('')
+    setDateFrom('')
+    setDateTo('')
+    setPage(1)
+    setLoading(true)
+    setError('')
+  }
 
   const handleDelete = async () => {
     if (!deleteTarget) {
@@ -180,8 +224,42 @@ export default function AssistanceRequestList() {
       <Alert type="error" onClose={() => setError('')}>
         {error}
       </Alert>
+      <Alert type="error">
+        {typeError}
+      </Alert>
 
       <div className="request-filter">
+        <label htmlFor="request-search">Search</label>
+        <input
+          id="request-search"
+          type="search"
+          placeholder="Senior name, title, or description"
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value)
+            setPage(1)
+            setLoading(true)
+            setError('')
+          }}
+        />
+        <label htmlFor="request-type">Type</label>
+        <select
+          id="request-type"
+          value={typeId}
+          onChange={(event) => {
+            setTypeId(event.target.value)
+            setPage(1)
+            setLoading(true)
+            setError('')
+          }}
+        >
+          <option value="">All types</option>
+          {types.map((type) => (
+            <option key={type.id} value={type.id}>
+              {type.name}
+            </option>
+          ))}
+        </select>
         <label htmlFor="request-status">Status</label>
         <select
           id="request-status"
@@ -201,14 +279,41 @@ export default function AssistanceRequestList() {
             </option>
           ))}
         </select>
+        <label htmlFor="request-date-from">From</label>
+        <input
+          id="request-date-from"
+          type="date"
+          value={dateFrom}
+          onChange={(event) => {
+            setDateFrom(event.target.value)
+            setPage(1)
+            setLoading(true)
+            setError('')
+          }}
+        />
+        <label htmlFor="request-date-to">To</label>
+        <input
+          id="request-date-to"
+          type="date"
+          value={dateTo}
+          onChange={(event) => {
+            setDateTo(event.target.value)
+            setPage(1)
+            setLoading(true)
+            setError('')
+          }}
+        />
+        <Button variant="secondary" onClick={clearFilters}>
+          Clear filters
+        </Button>
       </div>
 
       {loading ? (
         <Loading text="Loading requests..." />
       ) : items.length === 0 ? (
         <p className="empty">
-          {status
-            ? 'No requests with this status.'
+          {search || typeId || status || dateFrom || dateTo
+            ? 'No assistance requests match your search or filters.'
             : isAdmin
               ? 'No requests have been submitted yet.'
               : 'You have not submitted any requests yet.'}

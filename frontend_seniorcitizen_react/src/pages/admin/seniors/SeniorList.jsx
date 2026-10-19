@@ -5,6 +5,7 @@ import Button from '../../../components/Button'
 import Loading from '../../../components/Loading'
 import Modal from '../../../components/Modal'
 import Pagination from '../../../components/Pagination'
+import useDebounce from '../../../hooks/useDebounce'
 import { deleteSenior, getSeniors } from '../../../services/seniorService'
 
 export default function SeniorList() {
@@ -14,7 +15,7 @@ export default function SeniorList() {
   const [meta, setMeta] = useState(null)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const debouncedSearch = useDebounce(search)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(location.state?.message ?? '')
@@ -27,11 +28,6 @@ export default function SeniorList() {
       navigate(location.pathname, { replace: true, state: null })
     }
   }, [location.pathname, location.state, navigate])
-
-  useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedSearch(search), 400)
-    return () => clearTimeout(timeout)
-  }, [search])
 
   useEffect(() => {
     let isActive = true
